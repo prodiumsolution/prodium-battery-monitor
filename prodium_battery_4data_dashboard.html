@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRODIUM BATTERY MONITOR</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#0b0f14;color:#fff;min-height:100vh;padding:18px}
+.dashboard{max-width:700px;margin:auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.title{font-size:24px;font-weight:700}.online{font-size:13px;color:#ff6868}
+.card{background:#151b23;border:1px solid #26303c;border-radius:18px;padding:20px;margin-bottom:14px;box-shadow:0 8px 25px rgba(0,0,0,.25)}
+.main{text-align:center}.label{font-size:13px;color:#8f9aaa;letter-spacing:1.5px}
+.voltage{font-size:52px;font-weight:700;margin:8px 0 2px}.unit{color:#aeb8c5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.value{font-size:29px;font-weight:700;margin-top:8px}
+.soc{text-align:center}.soc-value{font-size:48px;font-weight:700;margin:5px}
+.bar{height:16px;background:#27303a;border-radius:20px;overflow:hidden;margin-top:15px}
+.fill{height:100%;width:0%;background:#55d98b;border-radius:20px;transition:.4s}
+.status{display:inline-block;padding:8px 14px;border-radius:20px;background:#3c1820;color:#ff6868;font-weight:bold;margin-top:10px}
+.footer{text-align:center;color:#66717f;font-size:12px;margin-top:15px}
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="header">
+    <div class="title">🔋 PRODIUM BATTERY MONITOR</div>
+    <div class="online" id="connection">● OFFLINE</div>
+  </div>
+
+  <div class="card main">
+    <div class="label">VOLTAGE</div>
+    <div class="voltage" id="voltage">--.--</div>
+    <div class="unit">V</div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="label">CURRENT</div><div class="value"><span id="current">--.-</span> A</div></div>
+    <div class="card"><div class="label">POWER</div><div class="value"><span id="power">--.--</span> kW</div></div>
+    <div class="card"><div class="label">BATTERY TEMP</div><div class="value"><span id="temp">--.-</span> °C</div></div>
+    <div class="card"><div class="label">SOC</div><div class="value"><span id="socSmall">--.-</span> %</div></div>
+  </div>
+
+  <div class="card soc">
+    <div class="label">STATE OF CHARGE</div>
+    <div class="soc-value"><span id="soc">--.-</span>%</div>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div class="status" id="status">WAITING</div>
+  </div>
+
+  <div class="footer">MQTT • ESP32 → HiveMQ → Dashboard</div>
+</div>
+
+<script>
+const MQTT_URL="wss://broker.hivemq.com:8884/mqtt";
+const TOPIC="prodium/battery/test";
+
+const client=mqtt.connect(MQTT_URL,{
+  clientId:"ProdiumDashboard-"+Math.random().toString(16).slice(2),
+  clean:true,connectTimeout:10000,reconnectPeriod:3000
+});
+
+const $=id=>document.getElementById(id);
+
+client.on("connect",()=>{
+  $("connection").textContent="● ONLINE";
+  $("connection").style.color="#65e6a5";
+  client.subscribe(TOPIC);
+});
+
+client.on("message",(topic,message)=>{
+  if(topic!==TOPIC)return;
+
+  // Format: voltage,current,temp,soc
+  const data=message.toString().trim().split(",").map(Number);
+
+  if(data.length!==4 || data.some(Number.isNaN)){
+    $("status").textContent="INVALID DATA";
+    return;
+  }
+
+  const [voltage,current,temp,soc]=data;
+  const power=voltage*current/1000;
+
+  $("voltage").textContent=voltage.toFixed(2);
+  $("current").textContent=current.toFixed(1);
+  $("power").textContent=power.toFixed(2);
+  $("temp").textContent=temp.toFixed(1);
+  $("soc").textContent=soc.toFixed(1);
+  $("socSmall").textContent=soc.toFixed(1);
+  $("fill").style.width=Math.max(0,Math.min(100,soc))+"%";
+
+  $("status").textContent="DATA RECEIVED";
+  $("status").style.background="#183c2b";
+  $("status").style.color="#65e6a5";
+});
+
+client.on("offline",()=>{
+  $("connection").textContent="● OFFLINE";
+  $("connection").style.color="#ff6868";
+  $("status").textContent="OFFLINE";
+});
+</script>
+</body>
+</html>
