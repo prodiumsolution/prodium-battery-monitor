@@ -3,104 +3,770 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRODIUM BATTERY MONITOR</title>
+
+<title>PRODIUM Battery Monitor</title>
+
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#0b0f14;color:#fff;min-height:100vh;padding:18px}
-.dashboard{max-width:700px;margin:auto}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-.title{font-size:24px;font-weight:700}.online{font-size:13px;color:#ff6868}
-.card{background:#151b23;border:1px solid #26303c;border-radius:18px;padding:20px;margin-bottom:14px;box-shadow:0 8px 25px rgba(0,0,0,.25)}
-.main{text-align:center}.label{font-size:13px;color:#8f9aaa;letter-spacing:1.5px}
-.voltage{font-size:52px;font-weight:700;margin:8px 0 2px}.unit{color:#aeb8c5}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.value{font-size:29px;font-weight:700;margin-top:8px}
-.soc{text-align:center}.soc-value{font-size:48px;font-weight:700;margin:5px}
-.bar{height:16px;background:#27303a;border-radius:20px;overflow:hidden;margin-top:15px}
-.fill{height:100%;width:0%;background:#55d98b;border-radius:20px;transition:.4s}
-.status{display:inline-block;padding:8px 14px;border-radius:20px;background:#3c1820;color:#ff6868;font-weight:bold;margin-top:10px}
-.footer{text-align:center;color:#66717f;font-size:12px;margin-top:15px}
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#0b1118;
+    color:white;
+    padding:20px;
+}
+
+.container{
+    max-width:1100px;
+    margin:auto;
+}
+
+/* HEADER */
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.title{
+    font-size:28px;
+    font-weight:bold;
+}
+
+.subtitle{
+    color:#8b98a8;
+    margin-top:5px;
+    font-size:14px;
+}
+
+.connection{
+    padding:10px 16px;
+    border-radius:20px;
+    background:#321818;
+    color:#ff6868;
+    font-size:14px;
+    font-weight:bold;
+}
+
+/* STATUS */
+
+.status-box{
+    background:#111b25;
+    border:1px solid #263442;
+    border-radius:15px;
+    padding:15px 18px;
+    margin-bottom:20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.status-label{
+    color:#8b98a8;
+    font-size:13px;
+}
+
+.status{
+    background:#321818;
+    color:#ff6868;
+    padding:7px 12px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+/* BATTERY GRID */
+
+.battery-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px;
+}
+
+.card{
+    background:#111b25;
+    border:1px solid #263442;
+    border-radius:18px;
+    padding:22px;
+    min-height:190px;
+}
+
+.card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
+
+.battery-name{
+    font-size:18px;
+    font-weight:bold;
+}
+
+.battery-number{
+    color:#65e6a5;
+    font-size:12px;
+}
+
+.voltage{
+    font-size:42px;
+    font-weight:bold;
+    margin-bottom:8px;
+}
+
+.unit{
+    font-size:18px;
+    color:#8b98a8;
+}
+
+.battery-status{
+    font-size:13px;
+    color:#8b98a8;
+}
+
+/* BAR */
+
+.bar-container{
+    width:100%;
+    height:8px;
+    background:#202c38;
+    border-radius:10px;
+    margin-top:20px;
+    overflow:hidden;
+}
+
+.bar{
+    height:100%;
+    width:0%;
+    background:#65e6a5;
+    border-radius:10px;
+    transition:width 0.5s;
+}
+
+/* INFO */
+
+.info-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+    margin-top:18px;
+}
+
+.info-card{
+    background:#111b25;
+    border:1px solid #263442;
+    border-radius:15px;
+    padding:18px;
+}
+
+.info-title{
+    color:#8b98a8;
+    font-size:12px;
+    margin-bottom:10px;
+}
+
+.info-value{
+    font-size:20px;
+    font-weight:bold;
+}
+
+/* FOOTER */
+
+.footer{
+    text-align:center;
+    color:#687686;
+    font-size:12px;
+    margin-top:30px;
+    padding-bottom:20px;
+}
+
+/* MOBILE */
+
+@media(max-width:700px){
+
+    body{
+        padding:12px;
+    }
+
+    .title{
+        font-size:22px;
+    }
+
+    .battery-grid{
+        grid-template-columns:1fr;
+    }
+
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+
+    .voltage{
+        font-size:36px;
+    }
+
+}
+
 </style>
 </head>
+
 <body>
-<div class="dashboard">
-  <div class="header">
-    <div class="title">🔋 PRODIUM BATTERY MONITOR</div>
-    <div class="online" id="connection">● OFFLINE</div>
-  </div>
 
-  <div class="card main">
-    <div class="label">VOLTAGE</div>
-    <div class="voltage" id="voltage">--.--</div>
-    <div class="unit">V</div>
-  </div>
+<div class="container">
 
-  <div class="grid">
-    <div class="card"><div class="label">CURRENT</div><div class="value"><span id="current">--.-</span> A</div></div>
-    <div class="card"><div class="label">POWER</div><div class="value"><span id="power">--.--</span> kW</div></div>
-    <div class="card"><div class="label">BATTERY TEMP</div><div class="value"><span id="temp">--.-</span> °C</div></div>
-    <div class="card"><div class="label">SOC</div><div class="value"><span id="socSmall">--.-</span> %</div></div>
-  </div>
+    <!-- HEADER -->
 
-  <div class="card soc">
-    <div class="label">STATE OF CHARGE</div>
-    <div class="soc-value"><span id="soc">--.-</span>%</div>
-    <div class="bar"><div class="fill" id="fill"></div></div>
-    <div class="status" id="status">WAITING</div>
-  </div>
+    <div class="header">
 
-  <div class="footer">MQTT • ESP32 → HiveMQ → Dashboard</div>
+        <div>
+            <div class="title">
+                PRODIUM BATTERY MONITOR
+            </div>
+
+            <div class="subtitle">
+                ESP32 → MQTT → Dashboard
+            </div>
+        </div>
+
+        <div id="connection" class="connection">
+            ● OFFLINE
+        </div>
+
+    </div>
+
+
+    <!-- STATUS -->
+
+    <div class="status-box">
+
+        <div>
+            <div class="status-label">
+                SYSTEM STATUS
+            </div>
+
+            <div id="lastUpdate" style="margin-top:5px;">
+                Waiting for data...
+            </div>
+        </div>
+
+        <div id="status" class="status">
+            OFFLINE
+        </div>
+
+    </div>
+
+
+    <!-- BATTERY -->
+
+    <div class="battery-grid">
+
+        <!-- BAT01 -->
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <div class="battery-name">
+                    BAT01
+                </div>
+
+                <div class="battery-number">
+                    CELL / PACK 01
+                </div>
+
+            </div>
+
+            <div class="voltage">
+                <span id="bat01">--.--</span>
+                <span class="unit">V</span>
+            </div>
+
+            <div class="battery-status" id="bat01Status">
+                Waiting for data
+            </div>
+
+            <div class="bar-container">
+                <div id="bar01" class="bar"></div>
+            </div>
+
+        </div>
+
+
+        <!-- BAT02 -->
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <div class="battery-name">
+                    BAT02
+                </div>
+
+                <div class="battery-number">
+                    CELL / PACK 02
+                </div>
+
+            </div>
+
+            <div class="voltage">
+                <span id="bat02">--.--</span>
+                <span class="unit">V</span>
+            </div>
+
+            <div class="battery-status" id="bat02Status">
+                Waiting for data
+            </div>
+
+            <div class="bar-container">
+                <div id="bar02" class="bar"></div>
+            </div>
+
+        </div>
+
+
+        <!-- BAT03 -->
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <div class="battery-name">
+                    BAT03
+                </div>
+
+                <div class="battery-number">
+                    CELL / PACK 03
+                </div>
+
+            </div>
+
+            <div class="voltage">
+                <span id="bat03">--.--</span>
+                <span class="unit">V</span>
+            </div>
+
+            <div class="battery-status" id="bat03Status">
+                Waiting for data
+            </div>
+
+            <div class="bar-container">
+                <div id="bar03" class="bar"></div>
+            </div>
+
+        </div>
+
+
+        <!-- BAT04 -->
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <div class="battery-name">
+                    BAT04
+                </div>
+
+                <div class="battery-number">
+                    CELL / PACK 04
+                </div>
+
+            </div>
+
+            <div class="voltage">
+                <span id="bat04">--.--</span>
+                <span class="unit">V</span>
+            </div>
+
+            <div class="battery-status" id="bat04Status">
+                Waiting for data
+            </div>
+
+            <div class="bar-container">
+                <div id="bar04" class="bar"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SYSTEM INFO -->
+
+    <div class="info-grid">
+
+        <div class="info-card">
+
+            <div class="info-title">
+                MQTT TOPIC
+            </div>
+
+            <div class="info-value" style="font-size:15px;">
+                prodium/battery
+            </div>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <div class="info-title">
+                MQTT BROKER
+            </div>
+
+            <div class="info-value" style="font-size:15px;">
+                HiveMQ Public
+            </div>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <div class="info-title">
+                BATTERIES ONLINE
+            </div>
+
+            <div class="info-value">
+                <span id="batteryCount">0</span> / 4
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        PRODIUM SOLUTION • ESP32 → WiFi → MQTT → Dashboard
+    </div>
+
 </div>
 
+
 <script>
-const MQTT_URL="wss://broker.hivemq.com:8884/mqtt";
-const TOPIC="prodium/battery/test";
 
-const client=mqtt.connect(MQTT_URL,{
-  clientId:"ProdiumDashboard-"+Math.random().toString(16).slice(2),
-  clean:true,connectTimeout:10000,reconnectPeriod:3000
+/* =========================================
+   MQTT SETTINGS
+========================================= */
+
+const MQTT_URL = "wss://broker.hivemq.com:8884/mqtt";
+
+const TOPIC = "prodium/battery";
+
+
+/* =========================================
+   MQTT CLIENT
+========================================= */
+
+const client = mqtt.connect(MQTT_URL, {
+
+    clientId:
+        "ProdiumDashboard-" +
+        Math.random().toString(16).slice(2),
+
+    clean:true,
+
+    connectTimeout:10000,
+
+    reconnectPeriod:3000
+
 });
 
-const $=id=>document.getElementById(id);
 
-client.on("connect",()=>{
-  $("connection").textContent="● ONLINE";
-  $("connection").style.color="#65e6a5";
-  client.subscribe(TOPIC);
+/* =========================================
+   ELEMENT HELPER
+========================================= */
+
+const $ = id => document.getElementById(id);
+
+
+/* =========================================
+   MQTT CONNECT
+========================================= */
+
+client.on("connect", () => {
+
+    console.log("MQTT CONNECTED");
+
+    $("connection").textContent = "● ONLINE";
+
+    $("connection").style.background = "#183c2b";
+
+    $("connection").style.color = "#65e6a5";
+
+
+    $("status").textContent = "CONNECTED";
+
+    $("status").style.background = "#183c2b";
+
+    $("status").style.color = "#65e6a5";
+
+
+    client.subscribe(TOPIC, (err) => {
+
+        if(err){
+
+            console.error("SUBSCRIBE ERROR:", err);
+
+            $("status").textContent = "SUBSCRIBE ERROR";
+
+        }
+        else{
+
+            console.log("SUBSCRIBED:", TOPIC);
+
+        }
+
+    });
+
 });
 
-client.on("message",(topic,message)=>{
-  if(topic!==TOPIC)return;
 
-  // Format: voltage,current,temp,soc
-  const data=message.toString().trim().split(",").map(Number);
+/* =========================================
+   MQTT MESSAGE
+========================================= */
 
-  if(data.length!==4 || data.some(Number.isNaN)){
-    $("status").textContent="INVALID DATA";
-    return;
-  }
+client.on("message", (topic, message) => {
 
-  const [voltage,current,temp,soc]=data;
-  const power=voltage*current/1000;
+    if(topic !== TOPIC) return;
 
-  $("voltage").textContent=voltage.toFixed(2);
-  $("current").textContent=current.toFixed(1);
-  $("power").textContent=power.toFixed(2);
-  $("temp").textContent=temp.toFixed(1);
-  $("soc").textContent=soc.toFixed(1);
-  $("socSmall").textContent=soc.toFixed(1);
-  $("fill").style.width=Math.max(0,Math.min(100,soc))+"%";
 
-  $("status").textContent="DATA RECEIVED";
-  $("status").style.background="#183c2b";
-  $("status").style.color="#65e6a5";
+    try{
+
+        const data = JSON.parse(message.toString());
+
+        console.log("MQTT RX:", data);
+
+
+        /* BAT01 */
+
+        if(typeof data.BAT01 === "number"){
+
+            updateBattery(
+                "bat01",
+                "bar01",
+                "bat01Status",
+                data.BAT01
+            );
+
+        }
+
+
+        /* BAT02 */
+
+        if(typeof data.BAT02 === "number"){
+
+            updateBattery(
+                "bat02",
+                "bar02",
+                "bat02Status",
+                data.BAT02
+            );
+
+        }
+
+
+        /* BAT03 */
+
+        if(typeof data.BAT03 === "number"){
+
+            updateBattery(
+                "bat03",
+                "bar03",
+                "bat03Status",
+                data.BAT03
+            );
+
+        }
+
+
+        /* BAT04 */
+
+        if(typeof data.BAT04 === "number"){
+
+            updateBattery(
+                "bat04",
+                "bar04",
+                "bat04Status",
+                data.BAT04
+            );
+
+        }
+
+
+        /* COUNT */
+
+        let count = 0;
+
+        if(typeof data.BAT01 === "number") count++;
+
+        if(typeof data.BAT02 === "number") count++;
+
+        if(typeof data.BAT03 === "number") count++;
+
+        if(typeof data.BAT04 === "number") count++;
+
+        $("batteryCount").textContent = count;
+
+
+        /* STATUS */
+
+        $("status").textContent = "DATA RECEIVED";
+
+        $("status").style.background = "#183c2b";
+
+        $("status").style.color = "#65e6a5";
+
+
+        /* TIME */
+
+        const now = new Date();
+
+        $("lastUpdate").textContent =
+            "Last update: " +
+            now.toLocaleTimeString();
+
+    }
+
+    catch(error){
+
+        console.error("JSON ERROR:", error);
+
+        $("status").textContent = "INVALID DATA";
+
+        $("status").style.background = "#321818";
+
+        $("status").style.color = "#ff6868";
+
+    }
+
 });
 
-client.on("offline",()=>{
-  $("connection").textContent="● OFFLINE";
-  $("connection").style.color="#ff6868";
-  $("status").textContent="OFFLINE";
+
+/* =========================================
+   UPDATE BATTERY
+========================================= */
+
+function updateBattery(
+    valueID,
+    barID,
+    statusID,
+    voltage
+){
+
+    $(valueID).textContent =
+        voltage.toFixed(2);
+
+
+    /*
+       Untuk demo sekarang kita anggap
+       0V = 0%
+       3.3V = 100%
+    */
+
+    let percent =
+        (voltage / 3.3) * 100;
+
+
+    percent =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                percent
+            )
+        );
+
+
+    $(barID).style.width =
+        percent + "%";
+
+
+    $(statusID).textContent =
+        "ONLINE • " +
+        percent.toFixed(0) +
+        "% signal range";
+
+}
+
+
+/* =========================================
+   MQTT OFFLINE
+========================================= */
+
+client.on("offline", () => {
+
+    console.log("MQTT OFFLINE");
+
+    $("connection").textContent =
+        "● OFFLINE";
+
+    $("connection").style.background =
+        "#321818";
+
+    $("connection").style.color =
+        "#ff6868";
+
+
+    $("status").textContent =
+        "OFFLINE";
+
+    $("status").style.background =
+        "#321818";
+
+    $("status").style.color =
+        "#ff6868";
+
 });
+
+
+/* =========================================
+   MQTT ERROR
+========================================= */
+
+client.on("error", (error) => {
+
+    console.error(
+        "MQTT ERROR:",
+        error
+    );
+
+});
+
+
+/* =========================================
+   RECONNECTING
+========================================= */
+
+client.on("reconnect", () => {
+
+    console.log(
+        "MQTT RECONNECTING..."
+    );
+
+    $("connection").textContent =
+        "● RECONNECTING";
+
+    $("connection").style.background =
+        "#302918";
+
+    $("connection").style.color =
+        "#ffd166";
+
+});
+
 </script>
+
 </body>
 </html>
