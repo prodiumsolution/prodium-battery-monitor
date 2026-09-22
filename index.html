@@ -1,4 +1,3 @@
-```
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,90 +6,1069 @@
 <meta charset="UTF-8">
 
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0,
-               maximum-scale=1.0,user-scalable=no">
+      content="width=device-width, initial-scale=1.0">
 
-<title>Prodium Battery Monitor</title>
+<title>PRODIUM Battery Monitor</title>
 
-<!-- MQTT.js -->
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-
 
 <style>
 
-/* =====================================================
-   GLOBAL
-===================================================== */
-
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
+* {
+    box-sizing: border-box;
 }
 
-body{
+body {
+    margin: 0;
+    padding: 20px 12px;
+    min-height: 100vh;
+
+    font-family: Arial, sans-serif;
+
+    color: white;
+    text-align: center;
+
     background:
-        radial-gradient(circle at 50% 15%,
-        rgba(0,150,255,.12),
-        transparent 30%),
-        #010914;
-
-    color:white;
-    font-family:Arial,Helvetica,sans-serif;
-
-    min-height:100vh;
-
-    display:flex;
-    justify-content:center;
-
-    overflow-x:hidden;
-}
-
-.dashboard{
-
-    width:100%;
-    max-width:520px;
-
-    padding:15px 12px 30px;
-
-    position:relative;
+        radial-gradient(
+            circle at top,
+            #092333 0%,
+            #02090f 55%,
+            #000000 100%
+        );
 }
 
 
-/* =====================================================
-   HEADER
-===================================================== */
+/* ============================= */
+/* HEADER */
+/* ============================= */
 
-.logo{
-    text-align:center;
-    margin-top:5px;
+.logo {
+    margin-top: 5px;
+
+    font-size: 48px;
+    font-weight: bold;
+
+    letter-spacing: 4px;
+
+    color: #00e676;
 }
 
-.logo-main{
-    font-size:34px;
-    font-weight:900;
-    letter-spacing:6px;
+.subtitle {
+    margin-top: 5px;
+    margin-bottom: 25px;
 
-    background:linear-gradient(
-        90deg,
-        #ffffff,
-        #00cfff,
-        #ffffff
+    color: #8fc7ed;
+
+    font-size: 19px;
+
+    letter-spacing: 3px;
+}
+
+
+/* ============================= */
+/* MQTT STATUS */
+/* ============================= */
+
+.mqtt-box {
+
+    max-width: 690px;
+
+    margin: auto;
+
+    padding: 18px;
+
+    background: #091e2a;
+
+    border: 1px solid #126083;
+
+    border-radius: 18px;
+
+    font-size: 20px;
+}
+
+#mqttStatus {
+    color: #ff5252;
+}
+
+
+/* ============================= */
+/* MAIN CARD */
+/* ============================= */
+
+.card {
+
+    max-width: 690px;
+
+    margin: 22px auto;
+
+    padding: 35px 20px;
+
+    background: rgba(
+        7,
+        30,
+        43,
+        0.95
     );
 
-    -webkit-background-clip:text;
-    color:transparent;
+    border: 1px solid #08729e;
+
+    border-radius: 30px;
+
+    box-shadow:
+        0 0 25px
+        rgba(
+            0,
+            180,
+            255,
+            0.08
+        );
 }
 
-.logo-sub{
-    font-size:9px;
-    letter-spacing:5px;
-    color:#8ba9bd;
-    margin-top:2px;
+
+/* ============================= */
+/* BATTERY NAME */
+/* ============================= */
+
+.battery-name {
+
+    margin-bottom: 25px;
+
+    font-size: 32px;
+
+    font-weight: bold;
 }
 
-.online{
-    margin-top:8px;
 
-    display:flex;
-    justify-content:center;
+/* ============================= */
+/* VOLTAGE */
+/* ============================= */
+
+.voltage {
+
+    margin: 20px 0;
+
+    font-size: 65px;
+
+    font-weight: bold;
+
+    color: #00e676;
+}
+
+.voltage-unit {
+
+    font-size: 28px;
+
+    color: #8fc7ed;
+}
+
+
+/* ============================= */
+/* INFO */
+/* ============================= */
+
+.info-container {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 14px;
+
+    margin-top: 25px;
+}
+
+.info {
+
+    padding: 20px;
+
+    background: #061a25;
+
+    border: 1px solid #145d78;
+
+    border-radius: 18px;
+}
+
+.info-title {
+
+    margin-bottom: 10px;
+
+    color: #8fc7ed;
+
+    font-size: 17px;
+}
+
+.info-value {
+
+    font-size: 26px;
+
+    font-weight: bold;
+}
+
+
+/* ============================= */
+/* GRAPH */
+/* ============================= */
+
+.graph {
+
+    margin-top: 30px;
+
+    padding: 15px;
+
+    background: #061a25;
+
+    border: 1px solid #145d78;
+
+    border-radius: 20px;
+}
+
+.graph-title {
+
+    margin-bottom: 10px;
+
+    font-size: 22px;
+}
+
+#voltageChart {
+
+    width: 100%;
+
+    height: 260px;
+
+    display: block;
+}
+
+
+/* ============================= */
+/* FOOTER */
+/* ============================= */
+
+.footer {
+
+    margin-top: 30px;
+
+    color: #6e9ab5;
+
+    letter-spacing: 2px;
+}
+
+
+/* ============================= */
+/* MOBILE */
+/* ============================= */
+
+@media(max-width: 500px) {
+
+    .logo {
+        font-size: 38px;
+    }
+
+    .subtitle {
+        font-size: 15px;
+    }
+
+    .voltage {
+        font-size: 52px;
+    }
+
+    .battery-name {
+        font-size: 27px;
+    }
+
+    .info-value {
+        font-size: 22px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- ============================= -->
+<!-- HEADER -->
+<!-- ============================= -->
+
+<div class="logo">
+    PRODIUM
+</div>
+
+<div class="subtitle">
+    BATTERY MONITOR
+</div>
+
+
+<!-- ============================= -->
+<!-- MQTT STATUS -->
+<!-- ============================= -->
+
+<div class="mqtt-box">
+
+    MQTT STATUS:
+
+    <span id="mqttStatus">
+        CONNECTING...
+    </span>
+
+</div>
+
+
+<!-- ============================= -->
+<!-- BATTERY CARD -->
+<!-- ============================= -->
+
+<div class="card">
+
+
+    <div class="battery-name">
+        🔋 BAT01
+    </div>
+
+
+    <!-- VOLTAGE -->
+
+    <div class="voltage">
+
+        <span id="batteryVoltage">
+            --.---
+        </span>
+
+        <span class="voltage-unit">
+            V
+        </span>
+
+    </div>
+
+
+    <!-- INFO BOXES -->
+
+    <div class="info-container">
+
+
+        <div class="info">
+
+            <div class="info-title">
+                STATUS
+            </div>
+
+            <div
+                class="info-value"
+                id="batteryStatus">
+
+                WAITING
+
+            </div>
+
+        </div>
+
+
+        <div class="info">
+
+            <div class="info-title">
+                DATA POINTS
+            </div>
+
+            <div
+                class="info-value"
+                id="dataPoints">
+
+                0
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- GRAPH -->
+
+    <div class="graph">
+
+        <div class="graph-title">
+            📈 Voltage Real-Time
+        </div>
+
+        <canvas
+            id="voltageChart">
+        </canvas>
+
+    </div>
+
+
+</div>
+
+
+<!-- ============================= -->
+<!-- FOOTER -->
+<!-- ============================= -->
+
+<div class="footer">
+    PRODIUM SOLUTION
+</div>
+
+
+
+<script>
+
+/* =========================================
+   MQTT SETTINGS
+   ========================================= */
+
+
+/*
+   HIVEMQ CLOUD WEBSOCKET
+*/
+
+const MQTT_URL =
+    "wss://edfe7137e02146138ee44283e416fe60.s1.eu.hivemq.cloud:8884/mqtt";
+
+
+/*
+   TOPIC
+   Mesti sama dengan ESP8266
+*/
+
+const MQTT_TOPIC =
+    "prodium/battery";
+
+
+/*
+   HIVEMQ USERNAME
+*/
+
+const MQTT_USER =
+    "prodium_esp32_esp8266";
+
+
+/*
+   🔴 TUKAR INI
+
+   Masukkan password credential
+   HiveMQ yang bos baru buat.
+*/
+
+const MQTT_PASSWORD =
+    "mmmsdnbhd2018";
+
+
+/* =========================================
+   DATA GRAPH
+   ========================================= */
+
+let voltageData = [];
+
+let timeData = [];
+
+let dataCount = 0;
+
+
+/* =========================================
+   CANVAS
+   ========================================= */
+
+const canvas =
+    document.getElementById(
+        "voltageChart"
+    );
+
+const ctx =
+    canvas.getContext("2d");
+
+
+function resizeCanvas() {
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+    const dpr =
+        window.devicePixelRatio || 1;
+
+    canvas.width =
+        rect.width * dpr;
+
+    canvas.height =
+        260 * dpr;
+
+    ctx.scale(
+        dpr,
+        dpr
+    );
+}
+
+
+function drawGraph() {
+
+    const width =
+        canvas.clientWidth;
+
+    const height = 260;
+
+
+    ctx.clearRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    if (
+        voltageData.length < 2
+    ) {
+        return;
+    }
+
+
+    /*
+       Cari MIN dan MAX
+    */
+
+    let min =
+        Math.min(
+            ...voltageData
+        );
+
+    let max =
+        Math.max(
+            ...voltageData
+        );
+
+
+    /*
+       Elakkan range = 0
+    */
+
+    if (
+        max - min < 0.01
+    ) {
+
+        max += 0.01;
+        min -= 0.01;
+
+    }
+
+
+    /*
+       Tambah sedikit ruang
+    */
+
+    const padding =
+        (max - min) * 0.10;
+
+    max += padding;
+    min -= padding;
+
+
+    const range =
+        max - min;
+
+
+    /* =========================
+       GRID
+       ========================= */
+
+    ctx.strokeStyle =
+        "#123c4e";
+
+    ctx.lineWidth = 1;
+
+
+    for (
+        let i = 0;
+        i <= 4;
+        i++
+    ) {
+
+        const y =
+            (height / 4) * i;
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y
+        );
+
+        ctx.lineTo(
+            width,
+            y
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    /* =========================
+       VOLTAGE LINE
+       ========================= */
+
+    ctx.strokeStyle =
+        "#00e676";
+
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+
+
+    voltageData.forEach(
+        function(
+            value,
+            index
+        ) {
+
+
+            const x =
+                index *
+                (
+                    width /
+                    (
+                        voltageData.length - 1
+                    )
+                );
+
+
+            const y =
+                height -
+                (
+                    (
+                        value - min
+                    )
+                    /
+                    range
+                )
+                *
+                height;
+
+
+            if (
+                index === 0
+            ) {
+
+                ctx.moveTo(
+                    x,
+                    y
+                );
+
+            } else {
+
+                ctx.lineTo(
+                    x,
+                    y
+                );
+
+            }
+
+        }
+    );
+
+
+    ctx.stroke();
+
+
+    /* =========================
+       LAST POINT
+       ========================= */
+
+    const lastIndex =
+        voltageData.length - 1;
+
+
+    const lastValue =
+        voltageData[
+            lastIndex
+        ];
+
+
+    const lastX =
+        lastIndex *
+        (
+            width /
+            (
+                voltageData.length - 1
+            )
+        );
+
+
+    const lastY =
+        height -
+        (
+            (
+                lastValue - min
+            )
+            /
+            range
+        )
+        *
+        height;
+
+
+    ctx.fillStyle =
+        "#00e676";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        lastX,
+        lastY,
+        5,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+}
+
+
+/* =========================================
+   RESIZE
+   ========================================= */
+
+window.addEventListener(
+    "resize",
+    function() {
+
+        resizeCanvas();
+
+        drawGraph();
+
+    }
+);
+
+
+resizeCanvas();
+
+
+/* =========================================
+   MQTT CONNECT
+   ========================================= */
+
+const client =
+    mqtt.connect(
+        MQTT_URL,
+        {
+
+            username:
+                MQTT_USER,
+
+            password:
+                MQTT_PASSWORD,
+
+            clientId:
+                "PRODIUM_WEB_" +
+                Math.random()
+                    .toString(16)
+                    .substring(2),
+
+            clean: true,
+
+            reconnectPeriod: 3000
+
+        }
+    );
+
+
+/* =========================================
+   MQTT CONNECTED
+   ========================================= */
+
+client.on(
+    "connect",
+    function() {
+
+        console.log(
+            "MQTT CONNECTED"
+        );
+
+
+        document.getElementById(
+            "mqttStatus"
+        ).innerText =
+            "CONNECTED";
+
+
+        document.getElementById(
+            "mqttStatus"
+        ).style.color =
+            "#00e676";
+
+
+        document.getElementById(
+            "batteryStatus"
+        ).innerText =
+            "ONLINE";
+
+
+        /*
+           Subscribe topic
+        */
+
+        client.subscribe(
+            MQTT_TOPIC,
+            function(error) {
+
+                if (error) {
+
+                    console.log(
+                        "SUBSCRIBE ERROR:",
+                        error
+                    );
+
+                } else {
+
+                    console.log(
+                        "SUBSCRIBED:",
+                        MQTT_TOPIC
+                    );
+
+                }
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================
+   MQTT MESSAGE
+   ========================================= */
+
+client.on(
+    "message",
+    function(
+        topic,
+        message
+    ) {
+
+
+        console.log(
+            "MQTT RX:",
+            message.toString()
+        );
+
+
+        try {
+
+
+            /*
+               Convert JSON
+            */
+
+            const data =
+                JSON.parse(
+                    message.toString()
+                );
+
+
+            /*
+               Check BAT01
+            */
+
+            if (
+                data.BAT01 !== undefined
+            ) {
+
+
+                const voltage =
+                    Number(
+                        data.BAT01
+                    );
+
+
+                /*
+                   Pastikan nombor sah
+                */
+
+                if (
+                    !Number.isFinite(
+                        voltage
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                /* ======================
+                   VOLTAGE
+                   ====================== */
+
+                document.getElementById(
+                    "batteryVoltage"
+                ).innerText =
+                    voltage.toFixed(3);
+
+
+                /* ======================
+                   STATUS
+                   ====================== */
+
+                document.getElementById(
+                    "batteryStatus"
+                ).innerText =
+                    "ONLINE";
+
+
+                /* ======================
+                   DATA COUNT
+                   ====================== */
+
+                dataCount++;
+
+
+                document.getElementById(
+                    "dataPoints"
+                ).innerText =
+                    dataCount;
+
+
+                /* ======================
+                   GRAPH DATA
+                   ====================== */
+
+                voltageData.push(
+                    voltage
+                );
+
+
+                timeData.push(
+                    new Date()
+                );
+
+
+                /*
+                   Simpan 60 point sahaja
+                */
+
+                if (
+                    voltageData.length > 60
+                ) {
+
+                    voltageData.shift();
+
+                    timeData.shift();
+
+                }
+
+
+                drawGraph();
+
+            }
+
+
+        }
+        catch(error) {
+
+            console.log(
+                "JSON ERROR:",
+                error
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   MQTT ERROR
+   ========================================= */
+
+client.on(
+    "error",
+    function(error) {
+
+        console.log(
+            "MQTT ERROR:",
+            error
+        );
+
+
+        document.getElementById(
+            "mqttStatus"
+        ).innerText =
+            "ERROR";
+
+
+        document.getElementById(
+            "mqttStatus"
+        ).style.color =
+            "#ff5252";
+
+
+        document.getElementById(
+            "batteryStatus"
+        ).innerText =
+            "OFFLINE";
+
+    }
+);
+
+
+/* =========================================
+   MQTT OFFLINE
+   ========================================= */
+
+client.on(
+    "offline",
+    function() {
+
+        document.getElementById(
+            "mqttStatus"
+        ).innerText =
+            "OFFLINE";
+
+
+        document.getElementById(
+            "mqttStatus"
+        ).style.color =
+            "#ff5252";
+
+
+        document.getElementById(
+            "batteryStatus"
+        ).innerText =
+            "OFFLINE";
+
+    }
+);
+
+
+/* =========================================
+   MQTT RECONNECT
+   ========================================= */
+
+client.on(
+    "reconnect",
+    function() {
+
+        document.getElementById(
+            "mqttStatus"
+        ).innerText =
+            "RECONNECTING...";
+
+
+        document.getElementById(
+            "mqttStatus"
+        ).style.color =
+            "#ffd740";
+
+    }
+);
+
+</script>
+
+</body>
+
+</html>
