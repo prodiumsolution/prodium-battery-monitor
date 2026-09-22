@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
 
 <title>PRODIUM Battery Monitor</title>
 
+<!-- MQTT -->
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Time adapter -->
+<script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
 
 <style>
 
@@ -20,766 +25,951 @@
 
 body {
     margin: 0;
-    padding: 20px 12px;
-    min-height: 100vh;
-
-    font-family: Arial, sans-serif;
-
-    color: white;
-    text-align: center;
-
     background:
-        radial-gradient(
-            circle at top,
-            #092333 0%,
-            #02090f 55%,
-            #000000 100%
-        );
+        radial-gradient(circle at top, #062331 0%, #03131c 45%, #01080d 100%);
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
 }
 
+.container {
+    width: 94%;
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px 0 35px;
+}
 
-/* ============================= */
-/* HEADER */
-/* ============================= */
+/* ================= HEADER ================= */
+
+.header {
+    text-align: center;
+    margin-bottom: 22px;
+}
 
 .logo {
-    margin-top: 5px;
-
-    font-size: 48px;
-    font-weight: bold;
-
-    letter-spacing: 4px;
-
-    color: #00e676;
+    font-size: clamp(42px, 7vw, 76px);
+    font-weight: 900;
+    letter-spacing: 5px;
+    color: #00ef91;
+    text-shadow: 0 0 20px rgba(0,255,150,0.25);
 }
 
 .subtitle {
-    margin-top: 5px;
-    margin-bottom: 25px;
-
-    color: #8fc7ed;
-
-    font-size: 19px;
-
-    letter-spacing: 3px;
+    color: #7ecfff;
+    font-size: clamp(18px, 3vw, 28px);
+    letter-spacing: 5px;
+    margin-top: -5px;
 }
 
+/* ================= STATUS ================= */
 
-/* ============================= */
-/* MQTT STATUS */
-/* ============================= */
-
-.mqtt-box {
-
-    max-width: 690px;
-
-    margin: auto;
-
-    padding: 18px;
-
-    background: #091e2a;
-
-    border: 1px solid #126083;
-
+.status-bar {
+    border: 1px solid #008ac0;
     border-radius: 18px;
+    padding: 16px 22px;
 
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+
+    background: rgba(2,25,36,0.65);
+    margin-bottom: 22px;
+
+    font-size: 18px;
+}
+
+.status-item {
+    text-align: center;
+}
+
+.status-divider {
+    width: 1px;
+    height: 35px;
+    background: #087da7;
+}
+
+.green {
+    color: #00ef91;
+}
+
+.red {
+    color: #ff4c55;
+}
+
+.blue {
+    color: #61c7ff;
+}
+
+/* ================= BATTERY CARD ================= */
+
+.battery-card {
+    border: 1px solid #008ac0;
+    border-radius: 22px;
+    padding: 30px;
+
+    background: rgba(3,27,39,0.72);
+
+    margin-bottom: 20px;
+}
+
+.battery-main {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr;
+    align-items: center;
+    gap: 20px;
+}
+
+.battery-name {
+    font-size: 42px;
+    font-weight: bold;
+}
+
+.battery-icon {
+    font-size: 65px;
+}
+
+.voltage {
+    text-align: center;
+    font-size: clamp(60px, 9vw, 100px);
+    font-weight: bold;
+    color: #00ef91;
+    line-height: 1;
+}
+
+.voltage span {
+    font-size: 30px;
+    color: #7ecfff;
+}
+
+.normal {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 8px 30px;
+
+    border: 1px solid #00ef91;
+    border-radius: 30px;
+
+    color: #00ef91;
     font-size: 20px;
 }
 
-#mqttStatus {
-    color: #ff5252;
-}
-
-
-/* ============================= */
-/* MAIN CARD */
-/* ============================= */
-
-.card {
-
-    max-width: 690px;
-
-    margin: 22px auto;
-
-    padding: 35px 20px;
-
-    background: rgba(
-        7,
-        30,
-        43,
-        0.95
-    );
-
-    border: 1px solid #08729e;
-
-    border-radius: 30px;
-
-    box-shadow:
-        0 0 25px
-        rgba(
-            0,
-            180,
-            255,
-            0.08
-        );
-}
-
-
-/* ============================= */
-/* BATTERY NAME */
-/* ============================= */
-
-.battery-name {
-
-    margin-bottom: 25px;
-
-    font-size: 32px;
-
-    font-weight: bold;
-}
-
-
-/* ============================= */
-/* VOLTAGE */
-/* ============================= */
-
-.voltage {
-
-    margin: 20px 0;
-
-    font-size: 65px;
-
-    font-weight: bold;
-
-    color: #00e676;
-}
-
-.voltage-unit {
-
-    font-size: 28px;
-
-    color: #8fc7ed;
-}
-
-
-/* ============================= */
-/* INFO */
-/* ============================= */
-
-.info-container {
-
-    display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap: 14px;
-
-    margin-top: 25px;
-}
-
-.info {
-
-    padding: 20px;
-
-    background: #061a25;
-
-    border: 1px solid #145d78;
-
-    border-radius: 18px;
-}
-
-.info-title {
-
-    margin-bottom: 10px;
-
-    color: #8fc7ed;
-
+.battery-info {
+    border-left: 1px solid #14556b;
+    padding-left: 30px;
     font-size: 17px;
+    line-height: 2;
 }
 
 .info-value {
+    float: right;
+}
 
-    font-size: 26px;
+/* ================= CHART ================= */
 
+.chart-card {
+    border: 1px solid #008ac0;
+    border-radius: 22px;
+    padding: 22px;
+
+    background: rgba(3,27,39,0.72);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 15px;
+}
+
+.chart-title {
+    font-size: 28px;
     font-weight: bold;
 }
 
-
-/* ============================= */
-/* GRAPH */
-/* ============================= */
-
-.graph {
-
-    margin-top: 30px;
-
-    padding: 15px;
-
-    background: #061a25;
-
-    border: 1px solid #145d78;
-
-    border-radius: 20px;
+.chart-buttons {
+    display: flex;
+    gap: 8px;
 }
 
-.graph-title {
+.chart-buttons button {
+    background: transparent;
+    color: #7ecfff;
 
-    margin-bottom: 10px;
+    border: 1px solid #087da7;
+    border-radius: 10px;
 
-    font-size: 22px;
+    padding: 10px 20px;
+    cursor: pointer;
+
+    font-size: 15px;
 }
 
-#voltageChart {
-
-    width: 100%;
-
-    height: 260px;
-
-    display: block;
+.chart-buttons button.active {
+    background: #00ef91;
+    color: #00150e;
+    border-color: #00ef91;
+    font-weight: bold;
 }
 
+.chart-wrapper {
+    position: relative;
+    height: 420px;
+}
 
-/* ============================= */
-/* FOOTER */
-/* ============================= */
+/* ================= LEGEND ================= */
+
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.dot-green {
+    background: #00ef91;
+    box-shadow: 0 0 10px #00ef91;
+}
+
+.dot-red {
+    background: #ff4149;
+    box-shadow: 0 0 10px #ff4149;
+}
+
+/* ================= STATS ================= */
+
+.stats {
+    display: grid;
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 15px;
+
+    margin-top: 20px;
+}
+
+.stat-card {
+    border: 1px solid #008ac0;
+    border-radius: 18px;
+
+    padding: 20px;
+    text-align: center;
+
+    background: rgba(3,27,39,0.72);
+}
+
+.stat-title {
+    color: #7ecfff;
+    font-size: 15px;
+}
+
+.stat-value {
+    font-size: 27px;
+    font-weight: bold;
+    margin-top: 7px;
+}
+
+.min-value {
+    color: #00ef91;
+}
+
+.max-value {
+    color: #ff5058;
+}
+
+.avg-value {
+    color: white;
+}
+
+/* ================= FOOTER ================= */
 
 .footer {
+    text-align: center;
+    margin-top: 35px;
 
-    margin-top: 30px;
-
-    color: #6e9ab5;
-
-    letter-spacing: 2px;
+    color: #65b8db;
+    letter-spacing: 5px;
 }
 
+.footer-small {
+    margin-top: 10px;
+    font-size: 13px;
+    letter-spacing: 3px;
+}
 
-/* ============================= */
-/* MOBILE */
-/* ============================= */
+/* ================= MOBILE ================= */
 
-@media(max-width: 500px) {
+@media(max-width: 800px) {
 
-    .logo {
-        font-size: 38px;
+    .status-bar {
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .subtitle {
-        font-size: 15px;
+    .status-divider {
+        width: 80%;
+        height: 1px;
     }
 
-    .voltage {
-        font-size: 52px;
+    .battery-main {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .battery-info {
+        border-left: none;
+        border-top: 1px solid #14556b;
+        padding-left: 0;
+        padding-top: 15px;
     }
 
     .battery-name {
-        font-size: 27px;
+        font-size: 32px;
     }
 
-    .info-value {
+    .chart-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .chart-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .chart-buttons button {
+        padding: 8px 12px;
+    }
+
+    .chart-wrapper {
+        height: 330px;
+    }
+
+    .stats {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 450px) {
+
+    .container {
+        width: 96%;
+    }
+
+    .battery-card {
+        padding: 20px 15px;
+    }
+
+    .chart-card {
+        padding: 14px;
+    }
+
+    .chart-title {
+        font-size: 21px;
+    }
+
+    .stats {
+        gap: 8px;
+    }
+
+    .stat-card {
+        padding: 14px 8px;
+    }
+
+    .stat-value {
         font-size: 22px;
     }
 
 }
 
 </style>
-
 </head>
-
 
 <body>
 
+<div class="container">
 
-<!-- ============================= -->
-<!-- HEADER -->
-<!-- ============================= -->
+    <!-- ================= HEADER ================= -->
 
-<div class="logo">
-    PRODIUM
-</div>
+    <div class="header">
 
-<div class="subtitle">
-    BATTERY MONITOR
-</div>
+        <div class="logo">
+            PRODIUM
+        </div>
 
-
-<!-- ============================= -->
-<!-- MQTT STATUS -->
-<!-- ============================= -->
-
-<div class="mqtt-box">
-
-    MQTT STATUS:
-
-    <span id="mqttStatus">
-        CONNECTING...
-    </span>
-
-</div>
-
-
-<!-- ============================= -->
-<!-- BATTERY CARD -->
-<!-- ============================= -->
-
-<div class="card">
-
-
-    <div class="battery-name">
-        🔋 BAT01
-    </div>
-
-
-    <!-- VOLTAGE -->
-
-    <div class="voltage">
-
-        <span id="batteryVoltage">
-            --.---
-        </span>
-
-        <span class="voltage-unit">
-            V
-        </span>
+        <div class="subtitle">
+            BATTERY MONITOR
+        </div>
 
     </div>
 
 
-    <!-- INFO BOXES -->
+    <!-- ================= STATUS ================= -->
 
-    <div class="info-container">
+    <div class="status-bar">
+
+        <div class="status-item">
+            <span class="green">●</span>
+            MQTT STATUS:
+            <span id="mqttStatus" class="red">
+                CONNECTING
+            </span>
+        </div>
+
+        <div class="status-divider"></div>
+
+        <div class="status-item">
+            WIFI:
+            <span class="green">
+                ONLINE
+            </span>
+        </div>
+
+        <div class="status-divider"></div>
+
+        <div class="status-item">
+            LAST UPDATE:
+            <span id="lastUpdate" class="blue">
+                --
+            </span>
+        </div>
+
+    </div>
 
 
-        <div class="info">
+    <!-- ================= BATTERY ================= -->
 
-            <div class="info-title">
-                STATUS
+    <div class="battery-card">
+
+        <div class="battery-main">
+
+            <div>
+
+                <div class="battery-icon">
+                    🔋
+                </div>
+
+                <div class="battery-name">
+                    BAT01
+                </div>
+
             </div>
 
-            <div
-                class="info-value"
-                id="batteryStatus">
 
-                WAITING
+            <div class="voltage">
+
+                <span id="voltage">
+                    0.000
+                </span>
+
+                <span>
+                    V
+                </span>
+
+                <br>
+
+                <div class="normal" id="statusText">
+                    WAITING
+                </div>
+
+            </div>
+
+
+            <div class="battery-info">
+
+                <div>
+                    Data Points:
+                    <span
+                        class="info-value"
+                        id="dataPoints">
+                        0
+                    </span>
+                </div>
+
+                <div>
+                    Raw ADC:
+                    <span
+                        class="info-value"
+                        id="rawADC">
+                        --
+                    </span>
+                </div>
+
+                <div>
+                    Raw A0:
+                    <span
+                        class="info-value"
+                        id="rawVoltage">
+                        --
+                    </span>
+                </div>
+
+                <div>
+                    Device:
+                    <span
+                        class="info-value green">
+                        BAT01
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= CHART ================= -->
+
+    <div class="chart-card">
+
+        <div class="chart-header">
+
+            <div class="chart-title">
+                📈 Voltage vs Masa
+                <span style="color:#00ef91;">
+                    (LIVE)
+                </span>
+            </div>
+
+            <div class="chart-buttons">
+
+                <button
+                    class="active"
+                    onclick="setRange(1,this)">
+                    1H
+                </button>
+
+                <button
+                    onclick="setRange(6,this)">
+                    6H
+                </button>
+
+                <button
+                    onclick="setRange(12,this)">
+                    12H
+                </button>
+
+                <button
+                    onclick="setRange(24,this)">
+                    24H
+                </button>
 
             </div>
 
         </div>
 
 
-        <div class="info">
+        <div class="chart-wrapper">
 
-            <div class="info-title">
+            <canvas id="voltageChart"></canvas>
+
+        </div>
+
+
+        <div class="legend">
+
+            <div class="legend-item">
+
+                <div class="dot dot-green"></div>
+
+                <span>
+                    Voltage Live
+                </span>
+
+            </div>
+
+            <div class="legend-item">
+
+                <div class="dot dot-red"></div>
+
+                <span>
+                    Voltage Trend
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= STATS ================= -->
+
+    <div class="stats">
+
+        <div class="stat-card">
+
+            <div class="stat-title">
+                MIN VOLTAGE
+            </div>
+
+            <div
+                class="stat-value min-value"
+                id="minVoltage">
+                --
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-title">
+                MAX VOLTAGE
+            </div>
+
+            <div
+                class="stat-value max-value"
+                id="maxVoltage">
+                --
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-title">
+                AVERAGE
+            </div>
+
+            <div
+                class="stat-value avg-value"
+                id="avgVoltage">
+                --
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-title">
                 DATA POINTS
             </div>
 
             <div
-                class="info-value"
-                id="dataPoints">
-
+                class="stat-value"
+                id="dataPoints2">
                 0
-
             </div>
 
         </div>
 
-
     </div>
 
 
-    <!-- GRAPH -->
+    <!-- ================= FOOTER ================= -->
 
-    <div class="graph">
+    <div class="footer">
 
-        <div class="graph-title">
-            📈 Voltage Real-Time
+        PRODIUM SOLUTION
+
+        <div class="footer-small">
+            RIDE FURTHER • POWER SMARTER
         </div>
 
-        <canvas
-            id="voltageChart">
-        </canvas>
-
     </div>
 
-
 </div>
-
-
-<!-- ============================= -->
-<!-- FOOTER -->
-<!-- ============================= -->
-
-<div class="footer">
-    PRODIUM SOLUTION
-</div>
-
 
 
 <script>
 
-/* =========================================
+/* =====================================================
    MQTT SETTINGS
-   ========================================= */
+   ===================================================== */
 
-
-/*
-   HIVEMQ CLOUD WEBSOCKET
-*/
-
-const MQTT_URL =
+const MQTT_HOST =
     "wss://edfe7137e02146138ee44283e416fe60.s1.eu.hivemq.cloud:8884/mqtt";
 
+const MQTT_USERNAME =
+    "prodium_esp32_esp8266";
 
-/*
-   TOPIC
-   Mesti sama dengan ESP8266
-*/
+const MQTT_PASSWORD =
+    "mmmsdnbhd2018";
 
 const MQTT_TOPIC =
     "prodium/battery";
 
 
-/*
-   HIVEMQ USERNAME
-*/
-
-const MQTT_USER =
-    "prodium_esp32_esp8266";
-
-
-/*
-   🔴 TUKAR INI
-
-   Masukkan password credential
-   HiveMQ yang bos baru buat.
-*/
-
-const MQTT_PASSWORD =
-    "mmmsdnbhd2018";
-
-
-/* =========================================
-   DATA GRAPH
-   ========================================= */
+/* =====================================================
+   DATA
+   ===================================================== */
 
 let voltageData = [];
 
-let timeData = [];
+let currentRangeHours = 1;
 
-let dataCount = 0;
+const MAX_POINTS = 10000;
 
 
-/* =========================================
-   CANVAS
-   ========================================= */
-
-const canvas =
-    document.getElementById(
-        "voltageChart"
-    );
+/* =====================================================
+   CHART
+   ===================================================== */
 
 const ctx =
-    canvas.getContext("2d");
+    document
+        .getElementById("voltageChart")
+        .getContext("2d");
 
 
-function resizeCanvas() {
+const voltageChart =
+    new Chart(ctx, {
 
-    const rect =
-        canvas.getBoundingClientRect();
+        type: "line",
 
-    const dpr =
-        window.devicePixelRatio || 1;
+        data: {
 
-    canvas.width =
-        rect.width * dpr;
+            datasets: [
 
-    canvas.height =
-        260 * dpr;
+                /* GREEN LIVE */
 
-    ctx.scale(
-        dpr,
-        dpr
-    );
-}
+                {
+                    label: "Voltage Live",
 
+                    data: [],
 
-function drawGraph() {
+                    borderColor: "#00ef91",
 
-    const width =
-        canvas.clientWidth;
+                    backgroundColor:
+                        "rgba(0,239,145,0.10)",
 
-    const height = 260;
+                    borderWidth: 2,
 
+                    pointRadius: 0,
 
-    ctx.clearRect(
-        0,
-        0,
-        width,
-        height
-    );
+                    pointHoverRadius: 5,
+
+                    tension: 0.25,
+
+                    fill: true
+                },
 
 
-    if (
-        voltageData.length < 2
-    ) {
-        return;
-    }
+                /* RED TREND */
+
+                {
+                    label: "Voltage Trend",
+
+                    data: [],
+
+                    borderColor: "#ff4149",
+
+                    backgroundColor:
+                        "transparent",
+
+                    borderWidth: 2,
+
+                    pointRadius: 0,
+
+                    tension: 0.35,
+
+                    fill: false
+                }
+
+            ]
+
+        },
 
 
-    /*
-       Cari MIN dan MAX
-    */
+        options: {
 
-    let min =
-        Math.min(
-            ...voltageData
-        );
+            responsive: true,
 
-    let max =
-        Math.max(
-            ...voltageData
-        );
+            maintainAspectRatio: false,
 
+            animation: false,
 
-    /*
-       Elakkan range = 0
-    */
+            interaction: {
 
-    if (
-        max - min < 0.01
-    ) {
+                mode: "index",
 
-        max += 0.01;
-        min -= 0.01;
+                intersect: false
 
-    }
+            },
 
+            plugins: {
 
-    /*
-       Tambah sedikit ruang
-    */
+                legend: {
+                    display: false
+                },
 
-    const padding =
-        (max - min) * 0.10;
+                tooltip: {
 
-    max += padding;
-    min -= padding;
+                    callbacks: {
 
+                        title: function(items) {
 
-    const range =
-        max - min;
+                            if (!items.length)
+                                return "";
 
+                            const date =
+                                new Date(
+                                    items[0].parsed.x
+                                );
 
-    /* =========================
-       GRID
-       ========================= */
+                            return date.toLocaleString(
+                                "ms-MY"
+                            );
+                        },
 
-    ctx.strokeStyle =
-        "#123c4e";
+                        label: function(context) {
 
-    ctx.lineWidth = 1;
+                            return (
+                                context.dataset.label +
+                                ": " +
+                                context.parsed.y.toFixed(3) +
+                                " V"
+                            );
 
+                        }
 
-    for (
-        let i = 0;
-        i <= 4;
-        i++
-    ) {
+                    }
 
-        const y =
-            (height / 4) * i;
+                }
+
+            },
 
 
-        ctx.beginPath();
+            scales: {
 
-        ctx.moveTo(
-            0,
-            y
-        );
+                x: {
 
-        ctx.lineTo(
-            width,
-            y
-        );
+                    type: "time",
 
-        ctx.stroke();
+                    time: {
 
-    }
+                        unit: "minute",
 
+                        displayFormats: {
 
-    /* =========================
-       VOLTAGE LINE
-       ========================= */
+                            minute: "HH:mm"
 
-    ctx.strokeStyle =
-        "#00e676";
+                        }
 
-    ctx.lineWidth = 3;
+                    },
 
-    ctx.beginPath();
+                    title: {
 
+                        display: true,
 
-    voltageData.forEach(
-        function(
-            value,
-            index
-        ) {
+                        text: "Masa",
 
+                        color: "#7ecfff"
 
-            const x =
-                index *
-                (
-                    width /
-                    (
-                        voltageData.length - 1
-                    )
-                );
+                    },
+
+                    ticks: {
+
+                        color: "#9ccfe5"
+
+                    },
+
+                    grid: {
+
+                        color:
+                            "rgba(80,160,190,0.15)"
+
+                    }
+
+                },
 
 
-            const y =
-                height -
-                (
-                    (
-                        value - min
-                    )
-                    /
-                    range
-                )
-                *
-                height;
+                y: {
 
+                    min: 3.80,
 
-            if (
-                index === 0
-            ) {
+                    max: 4.20,
 
-                ctx.moveTo(
-                    x,
-                    y
-                );
+                    title: {
 
-            } else {
+                        display: true,
 
-                ctx.lineTo(
-                    x,
-                    y
-                );
+                        text: "Voltage (V)",
+
+                        color: "#7ecfff"
+
+                    },
+
+                    ticks: {
+
+                        color: "#9ccfe5",
+
+                        callback: function(value) {
+
+                            return value.toFixed(2) + "V";
+
+                        }
+
+                    },
+
+                    grid: {
+
+                        color:
+                            "rgba(80,160,190,0.15)"
+
+                    }
+
+                }
 
             }
 
         }
-    );
+
+    });
 
 
-    ctx.stroke();
-
-
-    /* =========================
-       LAST POINT
-       ========================= */
-
-    const lastIndex =
-        voltageData.length - 1;
-
-
-    const lastValue =
-        voltageData[
-            lastIndex
-        ];
-
-
-    const lastX =
-        lastIndex *
-        (
-            width /
-            (
-                voltageData.length - 1
-            )
-        );
-
-
-    const lastY =
-        height -
-        (
-            (
-                lastValue - min
-            )
-            /
-            range
-        )
-        *
-        height;
-
-
-    ctx.fillStyle =
-        "#00e676";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        lastX,
-        lastY,
-        5,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-}
-
-
-/* =========================================
-   RESIZE
-   ========================================= */
-
-window.addEventListener(
-    "resize",
-    function() {
-
-        resizeCanvas();
-
-        drawGraph();
-
-    }
-);
-
-
-resizeCanvas();
-
-
-/* =========================================
+/* =====================================================
    MQTT CONNECT
-   ========================================= */
+   ===================================================== */
 
 const client =
     mqtt.connect(
-        MQTT_URL,
+        MQTT_HOST,
         {
 
             username:
-                MQTT_USER,
+                MQTT_USERNAME,
 
             password:
                 MQTT_PASSWORD,
 
             clientId:
-                "PRODIUM_WEB_" +
+                "PRODIUM_DASH_" +
                 Math.random()
                     .toString(16)
                     .substring(2),
 
             clean: true,
 
-            reconnectPeriod: 3000
+            reconnectPeriod: 3000,
+
+            connectTimeout: 10000
 
         }
     );
 
 
-/* =========================================
+/* =====================================================
    MQTT CONNECTED
-   ========================================= */
+   ===================================================== */
 
 client.on(
     "connect",
@@ -789,28 +979,15 @@ client.on(
             "MQTT CONNECTED"
         );
 
-
-        document.getElementById(
-            "mqttStatus"
-        ).innerText =
+        document
+            .getElementById("mqttStatus")
+            .innerText =
             "CONNECTED";
 
-
-        document.getElementById(
-            "mqttStatus"
-        ).style.color =
-            "#00e676";
-
-
-        document.getElementById(
-            "batteryStatus"
-        ).innerText =
-            "ONLINE";
-
-
-        /*
-           Subscribe topic
-        */
+        document
+            .getElementById("mqttStatus")
+            .className =
+            "green";
 
         client.subscribe(
             MQTT_TOPIC,
@@ -818,15 +995,15 @@ client.on(
 
                 if (error) {
 
-                    console.log(
-                        "SUBSCRIBE ERROR:",
+                    console.error(
+                        "Subscribe error",
                         error
                     );
 
                 } else {
 
                     console.log(
-                        "SUBSCRIBED:",
+                        "Subscribed:",
                         MQTT_TOPIC
                     );
 
@@ -839,30 +1016,68 @@ client.on(
 );
 
 
-/* =========================================
-   MQTT MESSAGE
-   ========================================= */
+/* =====================================================
+   MQTT ERROR
+   ===================================================== */
+
+client.on(
+    "error",
+    function(error) {
+
+        console.error(
+            "MQTT ERROR:",
+            error
+        );
+
+        document
+            .getElementById("mqttStatus")
+            .innerText =
+            "ERROR";
+
+        document
+            .getElementById("mqttStatus")
+            .className =
+            "red";
+
+    }
+);
+
+
+/* =====================================================
+   MQTT OFFLINE
+   ===================================================== */
+
+client.on(
+    "offline",
+    function() {
+
+        document
+            .getElementById("mqttStatus")
+            .innerText =
+            "OFFLINE";
+
+        document
+            .getElementById("mqttStatus")
+            .className =
+            "red";
+
+    }
+);
+
+
+/* =====================================================
+   RECEIVE DATA
+   ===================================================== */
 
 client.on(
     "message",
-    function(
-        topic,
-        message
-    ) {
+    function(topic, message) {
 
-
-        console.log(
-            "MQTT RX:",
-            message.toString()
-        );
+        if (topic !== MQTT_TOPIC)
+            return;
 
 
         try {
-
-
-            /*
-               Convert JSON
-            */
 
             const data =
                 JSON.parse(
@@ -870,107 +1085,155 @@ client.on(
                 );
 
 
-            /*
-               Check BAT01
-            */
+            console.log(
+                "MQTT DATA:",
+                data
+            );
+
+
+            /* -----------------------------
+               VOLTAGE
+               ----------------------------- */
+
+            const voltage =
+                parseFloat(
+                    data.BAT01
+                );
+
 
             if (
-                data.BAT01 !== undefined
+                isNaN(voltage)
+            ) {
+                return;
+            }
+
+
+            const now =
+                new Date();
+
+
+            /* -----------------------------
+               STORE DATA
+               ----------------------------- */
+
+            voltageData.push({
+
+                x: now,
+
+                y: voltage
+
+            });
+
+
+            if (
+                voltageData.length >
+                MAX_POINTS
             ) {
 
-
-                const voltage =
-                    Number(
-                        data.BAT01
-                    );
-
-
-                /*
-                   Pastikan nombor sah
-                */
-
-                if (
-                    !Number.isFinite(
-                        voltage
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                /* ======================
-                   VOLTAGE
-                   ====================== */
-
-                document.getElementById(
-                    "batteryVoltage"
-                ).innerText =
-                    voltage.toFixed(3);
-
-
-                /* ======================
-                   STATUS
-                   ====================== */
-
-                document.getElementById(
-                    "batteryStatus"
-                ).innerText =
-                    "ONLINE";
-
-
-                /* ======================
-                   DATA COUNT
-                   ====================== */
-
-                dataCount++;
-
-
-                document.getElementById(
-                    "dataPoints"
-                ).innerText =
-                    dataCount;
-
-
-                /* ======================
-                   GRAPH DATA
-                   ====================== */
-
-                voltageData.push(
-                    voltage
-                );
-
-
-                timeData.push(
-                    new Date()
-                );
-
-
-                /*
-                   Simpan 60 point sahaja
-                */
-
-                if (
-                    voltageData.length > 60
-                ) {
-
-                    voltageData.shift();
-
-                    timeData.shift();
-
-                }
-
-
-                drawGraph();
+                voltageData.shift();
 
             }
 
 
+            /* -----------------------------
+               BATTERY DISPLAY
+               ----------------------------- */
+
+            document
+                .getElementById("voltage")
+                .innerText =
+                voltage.toFixed(3);
+
+
+            /* -----------------------------
+               STATUS
+               ----------------------------- */
+
+            let status =
+                "NORMAL";
+
+            if (voltage <= 3.00) {
+
+                status = "LOW";
+
+            }
+
+            else if (
+                voltage >= 4.20
+            ) {
+
+                status = "HIGH";
+
+            }
+
+
+            document
+                .getElementById("statusText")
+                .innerText =
+                status;
+
+
+            /* -----------------------------
+               RAW
+               ----------------------------- */
+
+            if (
+                data.RAW_ADC !== undefined
+            ) {
+
+                document
+                    .getElementById("rawADC")
+                    .innerText =
+                    data.RAW_ADC;
+
+            }
+
+
+            if (
+                data.RAW_VOLTAGE !== undefined
+            ) {
+
+                document
+                    .getElementById("rawVoltage")
+                    .innerText =
+                    Number(
+                        data.RAW_VOLTAGE
+                    ).toFixed(3) +
+                    " V";
+
+            }
+
+
+            /* -----------------------------
+               TIME
+               ----------------------------- */
+
+            document
+                .getElementById("lastUpdate")
+                .innerText =
+                now.toLocaleTimeString(
+                    "ms-MY"
+                );
+
+
+            /* -----------------------------
+               UPDATE CHART
+               ----------------------------- */
+
+            updateChart();
+
+
+            /* -----------------------------
+               UPDATE STATS
+               ----------------------------- */
+
+            updateStats();
+
         }
+
         catch(error) {
 
-            console.log(
+            console.error(
                 "JSON ERROR:",
                 error
             );
@@ -981,94 +1244,236 @@ client.on(
 );
 
 
-/* =========================================
-   MQTT ERROR
-   ========================================= */
+/* =====================================================
+   UPDATE CHART
+   ===================================================== */
 
-client.on(
-    "error",
-    function(error) {
+function updateChart() {
 
-        console.log(
-            "MQTT ERROR:",
-            error
+    const cutoff =
+        Date.now() -
+        (
+            currentRangeHours *
+            60 *
+            60 *
+            1000
         );
 
 
-        document.getElementById(
-            "mqttStatus"
-        ).innerText =
-            "ERROR";
+    const filtered =
+        voltageData.filter(
+            point =>
+                point.x.getTime() >=
+                cutoff
+        );
 
 
-        document.getElementById(
-            "mqttStatus"
-        ).style.color =
-            "#ff5252";
+    /* -----------------------------
+       GREEN LIVE DATA
+       ----------------------------- */
+
+    voltageChart.data.datasets[0].data =
+        filtered;
 
 
-        document.getElementById(
-            "batteryStatus"
-        ).innerText =
-            "OFFLINE";
+    /* -----------------------------
+       RED MOVING AVERAGE
+       ----------------------------- */
+
+    const trend = [];
+
+    const windowSize = 5;
+
+
+    for (
+        let i = 0;
+        i < filtered.length;
+        i++
+    ) {
+
+        const start =
+            Math.max(
+                0,
+                i - windowSize + 1
+            );
+
+
+        const slice =
+            filtered.slice(
+                start,
+                i + 1
+            );
+
+
+        const sum =
+            slice.reduce(
+                (
+                    total,
+                    point
+                ) =>
+                    total + point.y,
+                0
+            );
+
+
+        const average =
+            sum / slice.length;
+
+
+        trend.push({
+
+            x:
+                filtered[i].x,
+
+            y:
+                average
+
+        });
 
     }
-);
 
 
-/* =========================================
-   MQTT OFFLINE
-   ========================================= */
+    voltageChart
+        .data
+        .datasets[1]
+        .data =
+        trend;
 
-client.on(
-    "offline",
+
+    voltageChart.update(
+        "none"
+    );
+
+}
+
+
+/* =====================================================
+   STATS
+   ===================================================== */
+
+function updateStats() {
+
+    if (
+        voltageData.length === 0
+    )
+        return;
+
+
+    const values =
+        voltageData.map(
+            point => point.y
+        );
+
+
+    const min =
+        Math.min(
+            ...values
+        );
+
+
+    const max =
+        Math.max(
+            ...values
+        );
+
+
+    const avg =
+        values.reduce(
+            (
+                a,
+                b
+            ) =>
+                a + b,
+            0
+        )
+        /
+        values.length;
+
+
+    document
+        .getElementById("minVoltage")
+        .innerText =
+        min.toFixed(3) +
+        " V";
+
+
+    document
+        .getElementById("maxVoltage")
+        .innerText =
+        max.toFixed(3) +
+        " V";
+
+
+    document
+        .getElementById("avgVoltage")
+        .innerText =
+        avg.toFixed(3) +
+        " V";
+
+
+    document
+        .getElementById("dataPoints")
+        .innerText =
+        voltageData.length;
+
+
+    document
+        .getElementById("dataPoints2")
+        .innerText =
+        voltageData.length;
+
+}
+
+
+/* =====================================================
+   RANGE BUTTON
+   ===================================================== */
+
+function setRange(
+    hours,
+    button
+) {
+
+    currentRangeHours =
+        hours;
+
+
+    document
+        .querySelectorAll(
+            ".chart-buttons button"
+        )
+        .forEach(
+            btn =>
+                btn.classList.remove(
+                    "active"
+                )
+        );
+
+
+    button.classList.add(
+        "active"
+    );
+
+
+    updateChart();
+
+}
+
+
+/* =====================================================
+   AUTO REFRESH CHART
+   ===================================================== */
+
+setInterval(
     function() {
 
-        document.getElementById(
-            "mqttStatus"
-        ).innerText =
-            "OFFLINE";
+        updateChart();
 
-
-        document.getElementById(
-            "mqttStatus"
-        ).style.color =
-            "#ff5252";
-
-
-        document.getElementById(
-            "batteryStatus"
-        ).innerText =
-            "OFFLINE";
-
-    }
-);
-
-
-/* =========================================
-   MQTT RECONNECT
-   ========================================= */
-
-client.on(
-    "reconnect",
-    function() {
-
-        document.getElementById(
-            "mqttStatus"
-        ).innerText =
-            "RECONNECTING...";
-
-
-        document.getElementById(
-            "mqttStatus"
-        ).style.color =
-            "#ffd740";
-
-    }
+    },
+    1000
 );
 
 </script>
 
 </body>
-
 </html>
